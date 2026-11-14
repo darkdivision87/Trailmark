@@ -44,7 +44,7 @@ bash scripts/build-mac.sh
 open dist/Trailmark.app
 ```
 
-Set `ARCH=arm64` or `ARCH=x86_64` to cross compile. The GitHub workflow tests on its host architecture and builds both app architectures. A tag such as `v0.1.0` creates a GitHub release after both builds pass. For broad distribution, add Developer ID signing and Apple notarization with your own credentials.
+Set `ARCH=arm64` or `ARCH=x86_64` to cross compile. The GitHub workflow tests on its host architecture and builds both app architectures. A tag such as `native-v0.1.0` creates a GitHub release after both builds pass, separately from the Electron app's versioning. For broad distribution, add Developer ID signing and Apple notarization with your own credentials.
 
 ## Scope
 
