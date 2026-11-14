@@ -1,0 +1,171 @@
+<div class="card" style="margin: 14px;">
+  <h2 class="text-heading">Notifications & Alerts</h2>
+  
+  <div id="notifications-content">
+    <p class="text-body">Manage your notification preferences and view recent alerts.</p>
+    
+    <!-- Notification settings -->
+    <div class="card" style="margin-top: 16px;">
+      <h3 class="text-heading">Notification Settings</h3>
+      
+      <div style="margin-top: 12px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <span class="text-body">Enable desktop notifications</span>
+          <label class="switch">
+            <input type="checkbox" id="desktop-notifications" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <span class="text-body">Show idle time warnings</span>
+          <label class="switch">
+            <input type="checkbox" id="idle-warnings" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <span class="text-body">Show activity summary notifications</span>
+          <label class="switch">
+            <input type="checkbox" id="summary-notifications" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span class="text-body">Notification frequency</span>
+          <select class="form-control" id="notification-frequency">
+            <option value="5">Every 5 minutes</option>
+            <option value="10">Every 10 minutes</option>
+            <option value="30" selected>Every 30 minutes (default)</option>
+            <option value="60">Every hour</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Alert rules -->
+    <div class="card" style="margin-top: 16px;">
+      <h3 class="text-heading">Alert Rules</h3>
+      
+      <div style="margin-top: 12px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <span class="text-body">Idle time threshold (minutes)</span>
+          <input type="number" class="form-control" id="idle-threshold" value="30" min="5" max="120">
+        </div>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span class="text-body">Max daily activity threshold (minutes)</span>
+          <input type="number" class="form-control" id="daily-threshold" value="480" min="60" max="1440">
+        </div>
+      </div>
+    </div>
+    
+    <!-- Notification history -->
+    <div class="card" style="margin-top: 16px;">
+      <h3 class="text-heading">Recent Notifications</h3>
+      
+      <div id="notification-history-list" style="margin-top: 12px; max-height: 300px; overflow-y: auto;">
+        <p class="text-muted">Loading notification history...</p>
+      </div>
+    </div>
+    
+    <!-- Save button -->
+    <div style="margin-top: 24px; text-align: right;">
+      <button class="btn btn-primary" onclick="saveNotificationSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Load notification settings
+function loadNotificationSettings() {
+  // This would be implemented to read from storage
+  console.log('Loading current notification settings...');
+}
+
+// Save current notification settings  
+async function saveNotificationSettings() {
+  try {
+    const desktopNotifications = document.getElementById('desktop-notifications').checked;
+    const idleWarnings = document.getElementById('idle-warnings').checked;
+    const summaryNotifications = document.getElementById('summary-notifications').checked;
+    const notificationFrequency = document.getElementById('notification-frequency').value;
+    const idleThreshold = document.getElementById('idle-threshold').value;
+    const dailyThreshold = document.getElementById('daily-threshold').value;
+    
+    console.log('Saving notification settings:', {
+      desktopNotifications,
+      idleWarnings,
+      summaryNotifications,
+      notificationFrequency,
+      idleThreshold,
+      dailyThreshold
+    });
+    
+    // In a real implementation, we would save these to storage
+    
+    alert('Notification settings saved successfully!');
+  } catch (error) {
+    console.error('Error saving notification settings:', error);
+    alert('Failed to save notification settings');
+  }
+}
+
+// Load notification history
+async function loadNotificationHistory() {
+  try {
+    const notifications = await window.trailmark.getNotifications();
+    
+    if (notifications.success) {
+      updateNotificationHistory(notifications.data || []);
+    } else {
+      console.error('Error getting notification history:', notifications.error);
+      document.getElementById('notification-history-list').innerHTML = 
+        '<p class="text-muted">Failed to load notification history.</p>';
+    }
+  } catch (error) {
+    console.error('Error loading notification history:', error);
+    document.getElementById('notification-history-list').innerHTML = 
+      '<p class="text-muted">Failed to load notification history.</p>';
+  }
+}
+
+// Update notification history display
+function updateNotificationHistory(notifications) {
+  const container = document.getElementById('notification-history-list');
+  
+  if (!notifications || notifications.length === 0) {
+    container.innerHTML = '<p class="text-muted">No notifications found.</p>';
+    return;
+  }
+  
+  // Sort by time descending (newest first)
+  const sortedNotifications = [...notifications].sort((a, b) => 
+    new Date(b.timestamp) - new Date(a.timestamp)
+  );
+  
+  let html = '<ul style="margin: 8px 0; padding-left: 20px;">';
+  
+  // Show last 10 notifications
+  sortedNotifications.slice(0, 10).forEach(notification => {
+    const date = new Date(notification.timestamp);
+    const formattedDate = date.toLocaleString();
+    
+    html += `<li class="text-body">
+      <strong>${notification.title}</strong> 
+      <span class="text-muted">(${formattedDate})</span>
+      <p style="margin: 4px 0 0 0; font-size: 13px;">${notification.message || ''}</p>
+    </li>`;
+  });
+  
+  html += '</ul>';
+  container.innerHTML = html;
+}
+
+// Initialize when page loads
+loadNotificationSettings();
+loadNotificationHistory();
+
+</script>

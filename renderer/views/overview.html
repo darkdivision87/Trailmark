@@ -1,0 +1,141 @@
+<div class="card" style="margin: 14px;">
+  <h2 class="text-heading">Activity Overview</h2>
+  
+  <div id="overview-content">
+    <p class="text-body">Welcome to Trailmark! Your activity tracking dashboard.</p>
+    
+    <div style="display: flex; gap: 8px; margin-top: 16px;">
+      <button class="btn btn-primary" onclick="showTimeline()">View Timeline</button>
+      <button class="btn" onclick="openSettings()">Settings</button>
+      <button class="btn" onclick="refreshOverview()">Refresh</button>
+    </div>
+    
+    <!-- Stats summary -->
+    <div id="stats-summary" style="margin-top: 24px;">
+      <h3 class="text-heading">Today's Activity</h3>
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <span class="text-muted">Total Time</span>
+          <span id="total-time" class="text-heading">0s</span>
+        </div>
+        
+        <div style="margin-top: 8px;">
+          <h4 class="text-heading">Top Applications</h4>
+          <div id="top-apps">
+            <!-- Will be populated by JS -->
+            <p class="text-muted">Loading...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Recent entries -->
+    <div id="recent-entries" style="margin-top: 24px;">
+      <h3 class="text-heading">Recent Activity</h3>
+      <div id="recent-list">
+        <!-- Will be populated by JS -->
+        <p class="text-muted">No recent activity data.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function refreshOverview() {
+  try {
+    console.log('Refreshing overview...');
+    
+    // Get summary statistics
+    const summary = await window.trailmark.getSummary();
+    if (summary.success) {
+      updateStats(summary.data);
+    }
+    
+    // Load recent entries  
+    const state = await window.trailmark.getState();
+    if (state.entries?.length > 0) {
+      populateRecentEntries(state.entries.slice(0, 5));
+    } else {
+      document.getElementById('recent-list').innerHTML = '<p class="text-muted">No recent activity data.</p>';
+    }
+    
+  } catch (error) {
+    console.error('Error refreshing overview:', error);
+  }
+}
+
+function updateStats(summary) {
+  // Update total time
+  const totalTimeElement = document.getElementById('total-time');
+  if (summary.totalDuration > 0) {
+    const duration = formatDuration(summary.totalDuration);
+    totalTimeElement.textContent = duration;
+  } else {
+    totalTimeElement.textContent = '0s';
+  }
+  
+  // Update top apps
+  const topAppsElement = document.getElementById('top-apps');
+  if (summary.apps?.length > 0) {
+    let html = '<ul style="margin: 8px 0; padding-left: 20px;">';
+    summary.apps.slice(0, 3).forEach(app => {
+      html += `<li class="text-body"><strong>${escapeHtml(app.name)}</strong> - ${app.formattedDuration}</li>`;
+    });
+    html += '</ul>';
+    topAppsElement.innerHTML = html;
+  } else {
+    topAppsElement.innerHTML = '<p class="text-muted">No app data available.</p>';
+  }
+}
+
+function populateRecentEntries(entries) {
+  const recentList = document.getElementById('recent-list');
+  
+  if (!entries || entries.length === 0) {
+    recentList.innerHTML = '<p class="text-muted">No recent activity data.</p>';
+    return;
+  }
+  
+  let html = '<ul style="margin: 8px 0; padding-left: 20px;">';
+  entries.forEach(entry => {
+    const appTitle = escapeHtml(entry.window?.title || 'Unknown App');
+    const duration = formatDuration(entry.duration);
+    const timestamp = new Date(entry.timestamp).toLocaleTimeString();
+    
+    html += `<li class="text-body">
+      <strong>${appTitle}</strong> (${duration}) - ${timestamp}
+    </li>`;
+  });
+  html += '</ul>';
+  
+  recentList.innerHTML = html;
+}
+
+function formatDuration(seconds) {
+  seconds = Math.max(0, Math.floor(seconds || 0));
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  let result = '';
+  if (hours > 0) result += `${hours}h `;
+  if (minutes > 0) result += `${minutes}m `;
+  if (secs > 0 || !result) result += `${secs}s`;
+  
+  return result.trim();
+}
+
+// Initial refresh
+refreshOverview();
+
+function showTimeline() {
+  // This will be implemented in phase 5 when we have the timeline view
+  navigateToView('timeline');
+}
+
+function openSettings() {
+  // This will be implemented in future phases
+  navigateToView('settings');
+}
+</script>

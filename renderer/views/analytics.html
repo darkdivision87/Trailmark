@@ -1,0 +1,234 @@
+<div class="card" style="margin: 14px;">
+  <h2 class="text-heading">Advanced Analytics</h2>
+  
+  <div id="analytics-content">
+    <p class="text-body">Deep insights into your productivity patterns and usage trends.</p>
+    
+    <!-- Performance metrics -->
+    <div class="card" style="margin-top: 16px;">
+      <h3 class="text-heading">Performance Metrics</h3>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">
+        <div class="metric-card">
+          <p class="text-muted">Avg. Daily Usage</p>
+          <p class="text-heading" id="avg-daily-usage">0h 0m</p>
+        </div>
+        
+        <div class="metric-card">
+          <p class="text-muted">Peak Productivity</p>
+          <p class="text-heading" id="peak-productivity">-</p>
+        </div>
+        
+        <div class="metric-card">
+          <p class="text-muted">Idle Time</p>
+          <p class="text-heading" id="idle-time">0h 0m</p>
+        </div>
+        
+        <div class="metric-card">
+          <p class="text-muted">Focus Sessions</p>
+          <p class="text-heading" id="focus-sessions">0</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Productivity trends -->
+    <div class="card" style="margin-top: 16px;">
+      <h3 class="text-heading">Productivity Trends</h3>
+      
+      <div style="height: 250px; display: flex; align-items: center; justify-content: center; background: var(--panel); border-radius: 8px; margin-top: 16px;">
+        <span style="font-size: 24px;">📊</span>
+        <p class="text-body" style="margin-left: 12px;">Productivity trend chart would appear here</p>
+      </div>
+    </div>
+    
+    <!-- Time distribution -->
+    <div class="card" style="margin-top: 16px;">
+      <h3 class="text-heading">Time Distribution</h3>
+      
+      <div style="height: 250px; display: flex; align-items: center; justify-content: center; background: var(--panel); border-radius: 8px; margin-top: 16px;">
+        <span style="font-size: 24px;">📈</span>
+        <p class="text-body" style="margin-left: 12px;">Time distribution chart would appear here</p>
+      </div>
+    </div>
+    
+    <!-- Focus analysis -->
+    <div class="card" style="margin-top: 16px;">
+      <h3 class="text-heading">Focus Analysis</h3>
+      
+      <div id="focus-analysis-content">
+        <p class="text-muted">Analyzing focus patterns and concentration levels...</p>
+      </div>
+    </div>
+    
+    <!-- Recommendations -->
+    <div class="card" style="margin-top: 16px;">
+      <h3 class="text-heading">Personalized Recommendations</h3>
+      
+      <div id="recommendations-content">
+        <p class="text-muted">Based on your usage patterns, here are some suggestions:</p>
+        
+        <ul style="margin: 8px 0; padding-left: 20px;">
+          <li class="text-body">Consider taking a break after 60 minutes of continuous work</li>
+          <li class="text-body">You've been productive for more than 4 hours today - great job!</li>
+          <li class="text-body">Try scheduling focused work sessions during your peak productivity hours</li>
+        </ul>
+      </div>
+    </div>
+    
+    <!-- Refresh button -->
+    <div style="margin-top: 24px; text-align: right;">
+      <button class="btn" onclick="refreshAnalytics()">Refresh Analytics</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Load analytics data
+async function loadAnalyticsData() {
+  try {
+    // Get summary statistics for performance metrics
+    const summary = await window.trailmark.getSummary();
+    
+    if (summary.success) {
+      updatePerformanceMetrics(summary.data);
+      
+      // Update focus analysis section
+      updateFocusAnalysis(summary.data);
+    } else {
+      console.error('Error getting analytics data:', summary.error);
+    }
+  } catch (error) {
+    console.error('Error loading analytics data:', error);
+    document.getElementById('analytics-content').innerHTML = 
+      '<p class="text-muted">Failed to load analytics data.</p>';
+  }
+}
+
+// Update performance metrics
+function updatePerformanceMetrics(summary) {
+  // Avg. Daily Usage
+  const avgDailyUsageElement = document.getElementById('avg-daily-usage');
+  if (summary.avgDailyDuration > 0) {
+    const duration = formatDuration(summary.avgDailyDuration);
+    avgDailyUsageElement.textContent = duration;
+  } else {
+    avgDailyUsageElement.textContent = '0h 0m';
+  }
+  
+  // Peak Productivity
+  const peakProductivityElement = document.getElementById('peak-productivity');
+  if (summary.peakHours && summary.peakHours.length > 0) {
+    const hour = summary.peakHours[0]; 
+    peakProductivityElement.textContent = `${hour}:00 - ${hour + 1}:00`;
+  } else {
+    peakProductivityElement.textContent = '-';
+  }
+  
+  // Idle Time
+  const idleTimeElement = document.getElementById('idle-time');
+  if (summary.idleTime > 0) {
+    const duration = formatDuration(summary.idleTime);
+    idleTimeElement.textContent = duration;
+  } else {
+    idleTimeElement.textContent = '0h 0m';
+  }
+  
+  // Focus Sessions
+  const focusSessionsElement = document.getElementById('focus-sessions');
+  if (summary.focusSessions !== undefined) {
+    focusSessionsElement.textContent = summary.focusSessions;
+  } else {
+    focusSessionsElement.textContent = '0';
+  }
+}
+
+// Update focus analysis section
+function updateFocusAnalysis(summary) {
+  const container = document.getElementById('focus-analysis-content');
+  
+  if (!summary) {
+    container.innerHTML = '<p class="text-muted">No data available for focus analysis.</p>';
+    return;
+  }
+  
+  let html = '<div style="display: flex; gap: 16px; margin-top: 12px;">';
+  
+  // Focus streak
+  if (summary.focusStreak !== undefined) {
+    html += `
+      <div class="card" style="flex: 1;">
+        <p class="text-muted">Current Focus Streak</p>
+        <p class="text-heading">${summary.focusStreak} days</p>
+      </div>`;
+  }
+  
+  // Productivity score
+  if (summary.productivityScore !== undefined) {
+    html += `
+      <div class="card" style="flex: 1;">
+        <p class="text-muted">Productivity Score</p>
+        <p class="text-heading">${Math.round(summary.productivityScore)}%</p>
+      </div>`;
+  }
+  
+  // Focus time percentage
+  if (summary.focusPercentage !== undefined) {
+    html += `
+      <div class="card" style="flex: 1;">
+        <p class="text-muted">Focus Time</p>
+        <p class="text-heading">${Math.round(summary.focusPercentage)}%</p>
+      </div>`;
+  }
+  
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Format duration for display
+function formatDuration(seconds) {
+  if (!seconds) return '0h 0m';
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  
+  let result = '';
+  if (hours > 0) result += `${hours}h `;
+  if (minutes > 0) result += `${minutes}m`;
+  
+  return result.trim() || '0m';
+}
+
+// Refresh analytics data
+async function refreshAnalytics() {
+  try {
+    // Show loading indicator
+    const content = document.getElementById('analytics-content');
+    const originalHTML = content.innerHTML;
+    content.innerHTML = '<p class="text-muted">Refreshing analytics...</p>';
+    
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+    
+    // Reload data
+    await loadAnalyticsData();
+    
+    // Show success message briefly
+    const refreshButton = document.querySelector('button[onclick="refreshAnalytics()"]');
+    if (refreshButton) {
+      const originalText = refreshButton.textContent;
+      refreshButton.textContent = 'Refreshed!';
+      setTimeout(() => {
+        refreshButton.textContent = originalText;
+      }, 2000);
+    }
+    
+  } catch (error) {
+    console.error('Error refreshing analytics:', error);
+    document.getElementById('analytics-content').innerHTML = 
+      '<p class="text-muted">Failed to refresh analytics.</p>';
+  }
+}
+
+// Initialize when page loads
+loadAnalyticsData();
+
+</script>

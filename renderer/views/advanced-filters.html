@@ -1,0 +1,308 @@
+<div class="card" style="margin: 14px;">
+  <h2 class="text-heading">Advanced Filters & Search</h2>
+  
+  <div id="filters-content">
+    <p class="text-body">Refine your timeline and statistics with advanced filtering options.</p>
+    
+    <!-- Filter controls -->
+    <div class="card" style="margin-top: 16px;">
+      <h3 class="text-heading">Filter Criteria</h3>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">
+        <!-- Application filter -->
+        <div>
+          <label class="text-muted">Application</label>
+          <select class="form-control" id="filter-app">
+            <option value="">All Applications</option>
+            <option value="chrome">Google Chrome</option>
+            <option value="vscode">Visual Studio Code</option>
+            <option value="slack">Slack</option>
+            <option value="zoom">Zoom</option>
+          </select>
+        </div>
+        
+        <!-- Project filter -->
+        <div>
+          <label class="text-muted">Project</label>
+          <select class="form-control" id="filter-project">
+            <option value="">All Projects</option>
+            <option value="web-dev">Web Development</option>
+            <option value="mobile-apps">Mobile Apps</option>
+            <option value="research">Research</option>
+            <option value="design">Design</option>
+          </select>
+        </div>
+        
+        <!-- Time range -->
+        <div>
+          <label class="text-muted">Time Range</label>
+          <select class="form-control" id="filter-time-range">
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="custom">Custom Date Range</option>
+          </select>
+        </div>
+        
+        <!-- Duration filter -->
+        <div>
+          <label class="text-muted">Min Duration (minutes)</label>
+          <input type="number" class="form-control" id="filter-min-duration" min="0" value="0">
+        </div>
+      </div>
+      
+      <!-- Custom date range -->
+      <div id="custom-date-range" style="margin-top: 16px; display: none;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <label class="text-muted">From:</label>
+          <input type="date" class="form-control" id="filter-date-start">
+          
+          <label class="text-muted">To:</label>
+          <input type="date" class="form-control" id="filter-date-end">
+        </div>
+      </div>
+      
+      <!-- Search input -->
+      <div style="margin-top: 16px;">
+        <label class="text-muted">Search Activities</label>
+        <input type="text" class="form-control" id="search-input" placeholder="Search by application name or window title...">
+      </div>
+      
+      <!-- Apply filters button -->
+      <div style="margin-top: 16px; text-align: right;">
+        <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+        <button class="btn" onclick="resetFilters()">Reset</button>
+      </div>
+    </div>
+    
+    <!-- Filter results -->
+    <div id="filter-results" style="margin-top: 16px;">
+      <h3 class="text-heading">Filter Results</h3>
+      
+      <div class="card">
+        <div id="results-content">
+          <p class="text-muted">Apply filters to see matching activities.</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Selected items -->
+    <div id="selected-items" style="margin-top: 16px;">
+      <h3 class="text-heading">Selected Items</h3>
+      
+      <div class="card">
+        <div id="selection-content">
+          <p class="text-muted">No items selected.</p>
+        </div>
+        
+        <div style="margin-top: 12px; text-align: right;">
+          <button class="btn" onclick="clearSelection()">Clear Selection</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Export options -->
+    <div id="export-options" style="margin-top: 16px;">
+      <h3 class="text-heading">Export Data</h3>
+      
+      <div class="card">
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button class="btn" onclick="exportData('csv')">Export as CSV</button>
+          <button class="btn" onclick="exportData('json')">Export as JSON</button>
+          <button class="btn" onclick="exportData('html')">Export as HTML</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Initialize the filter view
+function initFiltersView() {
+  // Set default date range to today
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('filter-date-start').value = today;
+  document.getElementById('filter-date-end').value = today;
+  
+  // Setup event listeners for custom date range
+  document.getElementById('filter-time-range').addEventListener('change', function() {
+    const customRangeDiv = document.getElementById('custom-date-range');
+    if (this.value === 'custom') {
+      customRangeDiv.style.display = 'block';
+    } else {
+      customRangeDiv.style.display = 'none';
+    }
+  });
+  
+  // Load existing filters or set defaults
+  loadCurrentFilters();
+}
+
+// Apply current filters 
+async function applyFilters() {
+  try {
+    const appFilter = document.getElementById('filter-app').value;
+    const projectFilter = document.getElementById('filter-project').value;
+    const timeRange = document.getElementById('filter-time-range').value;
+    const minDuration = parseInt(document.getElementById('filter-min-duration').value) || 0;
+    const searchQuery = document.getElementById('search-input').value.trim();
+    
+    // Get date range
+    let startDate, endDate;
+    if (timeRange === 'custom') {
+      startDate = new Date(document.getElementById('filter-date-start').value);
+      endDate = new Date(document.getElementById('filter-date-end').value);
+      endDate.setDate(endDate.getDate() + 1); // Include the end day
+    } else {
+      const now = new Date();
+      switch(timeRange) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          endDate = new Date(startDate);
+          endDate.setDate(endDate.getDate() + 1);
+          break;
+        case 'week':
+          const weekStart = new Date(now);
+          weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+          startDate = weekStart;
+          endDate = new Date(weekStart);
+          endDate.setDate(endDate.getDate() + 7);
+          break;
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          break;
+      }
+    }
+    
+    console.log('Applying filters:', {
+      app: appFilter,
+      project: projectFilter,
+      timeRange: timeRange,
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString(),
+      minDuration: minDuration,
+      searchQuery: searchQuery
+    });
+    
+    // In a real implementation, we would call the backend with these filters
+    const results = await simulateFilteredResults({
+      app: appFilter,
+      project: projectFilter,
+      startDate,
+      endDate,
+      minDuration,
+      searchQuery
+    });
+    
+    updateFilterResults(results);
+  } catch (error) {
+    console.error('Error applying filters:', error);
+    document.getElementById('results-content').innerHTML = 
+      '<p class="text-muted">Failed to apply filters.</p>';
+  }
+}
+
+// Filter actual recorded sessions.
+async function simulateFilteredResults(filters) {
+  const state = await window.trailmark.getState();
+  const items = state.entries.filter(entry => {
+    const title = entry.window?.title || '';
+    return (!filters.startDate || entry.timestamp >= filters.startDate.getTime()) &&
+      (!filters.endDate || entry.timestamp < filters.endDate.getTime()) &&
+      entry.duration >= filters.minDuration * 60 &&
+      (!filters.app || title.toLowerCase().includes(filters.app.toLowerCase())) &&
+      (!filters.searchQuery || title.toLowerCase().includes(filters.searchQuery.toLowerCase()));
+  }).map(entry => ({id: entry.id, app: entry.window?.path?.split(/[\\/]/).pop() || 'Application', title: entry.window?.title || 'Untitled', duration: entry.duration, date: new Date(entry.timestamp).toLocaleDateString()}));
+  return {count: items.length, items};
+}
+
+// Update filter results display
+function updateFilterResults(results) {
+  const container = document.getElementById('results-content');
+  
+  if (!results || results.count === 0) {
+    container.innerHTML = '<p class="text-muted">No activities match your filters.</p>';
+    return;
+  }
+  
+  let html = `<p class="text-body">${results.count} matching activities found:</p>
+    <ul style="margin: 8px 0; padding-left: 20px;">`;
+    
+  results.items.forEach(item => {
+    const duration = formatDuration(item.duration);
+    html += `
+      <li class="text-body">
+        <strong>${escapeHtml(item.app)}</strong> - ${duration}
+        <span class="text-muted">(${item.date})</span>
+        <p style="margin: 4px 0 0 0; font-size: 13px;">${escapeHtml(item.title)}</p>
+      </li>`;
+  });
+  
+  html += '</ul>';
+  container.innerHTML = html;
+}
+
+// Reset filters to defaults
+function resetFilters() {
+  document.getElementById('filter-app').value = '';
+  document.getElementById('filter-project').value = '';
+  document.getElementById('filter-time-range').value = 'today';
+  document.getElementById('filter-min-duration').value = '0';
+  document.getElementById('search-input').value = '';
+  
+  // Hide custom date range
+  document.getElementById('custom-date-range').style.display = 'none';
+  
+  // Clear results
+  document.getElementById('results-content').innerHTML = '<p class="text-muted">Apply filters to see matching activities.</p>';
+}
+
+// Load current filter state from storage (simulated)
+function loadCurrentFilters() {
+  console.log('Loading current filters...');
+  // In a real implementation, this would read from localStorage or settings
+}
+
+// Clear selection
+function clearSelection() {
+  document.getElementById('selection-content').innerHTML = '<p class="text-muted">No items selected.</p>';
+}
+
+// Export data in various formats
+async function exportData(format) {
+  try {
+    console.log(`Exporting data as ${format}`);
+    
+    // In a real implementation, this would:
+    // 1. Get the current filtered data  
+    // 2. Format it according to the selected format
+    // 3. Trigger download
+    
+    alert(`Exporting data as ${format.toUpperCase()}... This feature will be implemented in Phase 6.`);
+  } catch (error) {
+    console.error('Error exporting data:', error);
+    alert('Failed to export data');
+  }
+}
+
+// Format duration for display
+function formatDuration(seconds) {
+  seconds = Math.max(0, Math.floor(seconds || 0));
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  let result = '';
+  if (hours > 0) result += `${hours}h `;
+  if (minutes > 0) result += `${minutes}m `;
+  if (secs > 0 || !result) result += `${secs}s`;
+  
+  return result.trim();
+}
+
+// Initialize when page loads
+initFiltersView();
+
+</script>
