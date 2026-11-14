@@ -38,6 +38,7 @@ Install Xcode Command Line Tools (`xcode-select --install`), then:
 ```sh
 git clone https://github.com/darkdivision87/Trailmark.git
 cd Trailmark
+cd native-macos
 swift test
 bash scripts/build-mac.sh
 open dist/Trailmark.app

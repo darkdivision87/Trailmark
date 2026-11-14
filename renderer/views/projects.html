@@ -1,0 +1,157 @@
+<div class="card" style="margin: 14px;">
+  <h2 class="text-heading">Projects & Applications</h2>
+  
+  <div id="projects-content">
+    <p class="text-body">Track your time across different projects and applications.</p>
+    
+    <div style="display: flex; gap: 8px; margin-top: 16px;">
+      <button class="btn btn-primary" onclick="newProject()">New Project</button>
+      <button class="btn" onclick="refreshProjects()">Refresh</button>
+    </div>
+    
+    <!-- Projects list -->
+    <div id="projects-list" style="margin-top: 24px;">
+      <h3 class="text-heading">Your Projects</h3>
+      
+      <div class="card">
+        <p class="text-muted">No projects created yet.</p>
+        
+        <div style="display: flex; justify-content: center; margin-top: 16px;">
+          <button class="btn" onclick="newProject()">Create First Project</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Applications summary -->
+    <div id="apps-summary" style="margin-top: 24px;">
+      <h3 class="text-heading">Application Usage</h3>
+      
+      <div id="apps-summary-content">
+        <p class="text-muted">Application usage statistics would appear here.</p>
+        
+        <div style="background: var(--panel); border-radius: 8px; height: 200px; display: flex; align-items: center; justify-content: center; margin-top: 16px;">
+          <div>
+            <span style="font-size: 16px;">📊</span>
+            <p class="text-body">Application usage chart would be displayed here</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Recent activity from projects -->
+    <div id="project-activity" style="margin-top: 24px;">
+      <h3 class="text-heading">Recent Activity</h3>
+      
+      <div id="recent-project-entries">
+        <p class="text-muted">Loading recent project activity...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Refresh projects view
+async function refreshProjects() {
+  try {
+    console.log('Refreshing projects...');
+    
+    // Get summary statistics to populate application usage
+    const summary = await window.trailmark.getSummary();
+    if (summary.success) {
+      updateAppsSummary(summary.data);
+    }
+    
+    // Load recent entries for project activity
+    const state = await window.trailmark.getState();
+    if (state.entries?.length > 0) {
+      populateProjectActivity(state.entries.slice(0, 5));
+    } else {
+      document.getElementById('recent-project-entries').innerHTML = '<p class="text-muted">No recent activity data.</p>';
+    }
+    
+  } catch (error) {
+    console.error('Error refreshing projects:', error);
+  }
+}
+
+// Update application usage summary
+function updateAppsSummary(summary) {
+  const container = document.getElementById('apps-summary-content');
+  
+  if (!summary.apps || summary.apps.length === 0) {
+    container.innerHTML = '<p class="text-muted">No app data available.</p>';
+    return;
+  }
+  
+  // Create a simple text-based visualization
+  let html = `
+    <div style="display: flex; gap: 12px; margin-top: 8px;">
+      ${summary.apps.slice(0, 5).map(app => 
+        `<div style="flex: 1; text-align: center;">
+          <div style="font-size: 24px;">${app.formattedDuration}</div>
+          <div class="text-muted">${escapeHtml(app.name)}</div>
+        </div>`
+      ).join('')}
+    </div>
+    
+    <p class="text-body" style="margin-top: 16px; text-align: center;">
+      Total apps tracked: ${summary.apps.length}
+    </p>
+  `;
+  
+  container.innerHTML = html;
+}
+
+// Populate project activity
+function populateProjectActivity(entries) {
+  const container = document.getElementById('recent-project-entries');
+  
+  if (!entries || entries.length === 0) {
+    container.innerHTML = '<p class="text-muted">No recent activity data.</p>';
+    return;
+  }
+  
+  let html = '<ul style="margin: 8px 0; padding-left: 20px;">';
+  
+  // Sort by timestamp descending
+  const sortedEntries = [...entries].sort((a, b) => b.timestamp - a.timestamp);
+  
+  sortedEntries.forEach(entry => {
+    const appTitle = escapeHtml(entry.window?.title || 'Unknown App');
+    const duration = formatDuration(entry.duration);
+    const timestamp = new Date(entry.timestamp).toLocaleTimeString();
+    
+    html += `<li class="text-body">
+      <strong>${appTitle}</strong> (${duration}) - ${timestamp}
+    </li>`;
+  });
+  
+  html += '</ul>';
+  container.innerHTML = html;
+}
+
+// Format duration for display
+function formatDuration(seconds) {
+  seconds = Math.max(0, Math.floor(seconds || 0));
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  let result = '';
+  if (hours > 0) result += `${hours}h `;
+  if (minutes > 0) result += `${minutes}m `;
+  if (secs > 0 || !result) result += `${secs}s`;
+  
+  return result.trim();
+}
+
+// Create a new project
+function newProject() {
+  alert('New project creation would open here');
+}
+
+// Initialize when page loads
+refreshProjects();
+
+</script>

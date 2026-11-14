@@ -1,0 +1,230 @@
+<div class="card" style="margin: 14px;">
+  <h2 class="text-heading">Activity Statistics</h2>
+  
+  <div id="stats-content">
+    <p class="text-body">Detailed statistics and visualizations of your activity.</p>
+    
+    <!-- Time range controls -->
+    <div style="display: flex; gap: 8px; margin-top: 16px; align-items: center;">
+      <label for="stats-range-start" class="text-muted">From:</label>
+      <input type="date" id="stats-range-start" class="form-control" style="width: auto;">
+      
+      <label for="stats-range-end" class="text-muted">To:</label>
+      <input type="date" id="stats-range-end" class="form-control" style="width: auto;">
+      
+      <button class="btn" onclick="applyStatsRange()">Apply</button>
+      <button class="btn" onclick="resetStatsRange()">Reset</button>
+    </div>
+    
+    <!-- Charts section -->
+    <div id="stats-charts" style="margin-top: 24px; display: grid; gap: 16px;">
+      <!-- Chart placeholders with better layout -->
+      <div class="card">
+        <h3 class="text-heading">Application Usage</h3>
+        <div style="height: 200px; display: flex; align-items: center; justify-content: center; background: var(--panel); border-radius: 8px;">
+          <span style="font-size: 16px;">📊</span>
+          <p class="text-body" style="margin-left: 8px;">Application usage chart would appear here</p>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 class="text-heading">Daily Activity Trends</h3>
+        <div style="height: 200px; display: flex; align-items: center; justify-content: center; background: var(--panel); border-radius: 8px;">
+          <span style="font-size: 16px;">📈</span>
+          <p class="text-body" style="margin-left: 8px;">Daily activity trend chart would appear here</p>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 class="text-heading">Usage by Time of Day</h3>
+        <div style="height: 200px; display: flex; align-items: center; justify-content: center; background: var(--panel); border-radius: 8px;">
+          <span style="font-size: 16px;">⏰</span>
+          <p class="text-body" style="margin-left: 8px;">Time of day usage chart would appear here</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Summary stats -->
+    <div id="stats-summary" style="margin-top: 24px;">
+      <h3 class="text-heading">Usage Summary</h3>
+      <div class="card">
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px;">
+          <div style="flex: 1; min-width: 200px;">
+            <p class="text-muted">Total Time</p>
+            <p id="total-time-stats" class="text-heading">0s</p>
+          </div>
+          
+          <div style="flex: 1; min-width: 200px;">
+            <p class="text-muted">Active Days</p>
+            <p id="active-days-stats" class="text-heading">0</p>
+          </div>
+          
+          <div style="flex: 1; min-width: 200px;">
+            <p class="text-muted">Top Application</p>
+            <p id="top-app-stats" class="text-heading">-</p>
+          </div>
+          
+          <div style="flex: 1; min-width: 200px;">
+            <p class="text-muted">Avg. Session</p>
+            <p id="avg-session-stats" class="text-heading">0s</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Top apps list -->
+    <div id="top-apps-list" style="margin-top: 24px;">
+      <h3 class="text-heading">Top Applications</h3>
+      <div class="card">
+        <div id="apps-list-content">
+          <p class="text-muted">Loading top applications...</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Load more button -->
+    <div style="margin-top: 16px; text-align: center;">
+      <button class="btn" onclick="loadMoreStats()">Load More</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Set default date range to last week
+function setDefaultStatsRange() {
+  const endDate = new Date();
+  const startDate = new Date(endDate);
+  startDate.setDate(startDate.getDate() - 7);
+  
+  document.getElementById('stats-range-start').valueAsDate = startDate;
+  document.getElementById('stats-range-end').valueAsDate = endDate;
+}
+
+// Apply date range filter for stats
+async function applyStatsRange() {
+  try {
+    const startInput = document.getElementById('stats-range-start');
+    const endInput = document.getElementById('stats-range-end');
+    
+    if (!startInput.value || !endInput.value) {
+      return;
+    }
+    
+    const startTime = new Date(startInput.value + 'T00:00:00').getTime();
+    const endTime = new Date(endInput.value + 'T23:59:59.999').getTime(); // Add a day to include end date
+    
+    console.log('Filtering stats from:', new Date(startTime), 'to:', new Date(endTime));
+    
+    // For now, just refresh the data
+    await loadStatsData();
+  } catch (error) {
+    console.error('Error applying stats range:', error);
+  }
+}
+
+// Reset to default date range for stats
+function resetStatsRange() {
+  setDefaultStatsRange();
+  applyStatsRange();
+}
+
+// Load stats data 
+async function loadStatsData() {
+  try {
+    // Get summary statistics
+    const summary = await window.trailmark.getSummary();
+    
+    if (summary.success) {
+      updateStatsSummary(summary.data);
+      populateAppsList(summary.data.apps || []);
+    } else {
+      console.error('Error getting stats data:', summary.error);
+    }
+  } catch (error) {
+    console.error('Error loading stats data:', error);
+  }
+}
+
+// Update summary statistics
+function updateStatsSummary(summary) {
+  // Total time
+  const totalTimeElement = document.getElementById('total-time-stats');
+  if (summary.totalDuration > 0) {
+    const duration = formatDuration(summary.totalDuration);
+    totalTimeElement.textContent = duration;
+  } else {
+    totalTimeElement.textContent = '0s';
+  }
+  
+  // Active days - this would need to be calculated from the data
+  document.getElementById('active-days-stats').textContent = summary.activeDays || 0;
+  
+  // Top application
+  const topAppElement = document.getElementById('top-app-stats');
+  if (summary.apps && summary.apps.length > 0) {
+    topAppElement.textContent = summary.apps[0].name;
+  } else {
+    topAppElement.textContent = '-';
+  }
+  
+  // Average session - this would need to be calculated from data
+  const avgSessionElement = document.getElementById('avg-session-stats');
+  if (summary.avgDuration > 0) {
+    const duration = formatDuration(summary.avgDuration);
+    avgSessionElement.textContent = duration;
+  } else {
+    avgSessionElement.textContent = '0s';
+  }
+}
+
+// Populate applications list
+function populateAppsList(apps) {
+  const container = document.getElementById('apps-list-content');
+  
+  if (!apps || apps.length === 0) {
+    container.innerHTML = '<p class="text-muted">No application data available.</p>';
+    return;
+  }
+  
+  let html = '<ul style="margin: 8px 0; padding-left: 20px;">';
+  
+  // Sort by duration descending
+  const sortedApps = [...apps].sort((a, b) => (b.duration || 0) - (a.duration || 0));
+  
+  sortedApps.slice(0, 10).forEach(app => {
+    html += `<li class="text-body">
+      <strong>${escapeHtml(app.name)}</strong> 
+      <span class="text-muted">(${app.formattedDuration})</span>
+    </li>`;
+  });
+  
+  html += '</ul>';
+  container.innerHTML = html;
+}
+
+// Format duration for display
+function formatDuration(seconds) {
+  seconds = Math.max(0, Math.floor(seconds || 0));
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  let result = '';
+  if (hours > 0) result += `${hours}h `;
+  if (minutes > 0) result += `${minutes}m `;
+  if (secs > 0 || !result) result += `${secs}s`;
+  
+  return result.trim();
+}
+
+// Load more stats data
+function loadMoreStats() {
+  alert('Loading more statistics...');
+}
+
+// Initialize when page loads
+setDefaultStatsRange();
+loadStatsData();
+
+</script>

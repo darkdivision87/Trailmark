@@ -1,0 +1,150 @@
+<div class="card" style="margin: 14px;">
+  <h2 class="text-heading">Activity Timeline</h2>
+  
+  <div id="timeline-content">
+    <p class="text-body">Timeline view showing your activity history.</p>
+    
+    <!-- Time range controls -->
+    <div style="display: flex; gap: 8px; margin-top: 16px; align-items: center;">
+      <label for="date-range-start" class="text-muted">From:</label>
+      <input type="date" id="date-range-start" class="form-control" style="width: auto;">
+      
+      <label for="date-range-end" class="text-muted">To:</label>
+      <input type="date" id="date-range-end" class="form-control" style="width: auto;">
+      
+      <button class="btn" onclick="applyDateRange()">Apply</button>
+      <button class="btn" onclick="resetDateRange()">Reset</button>
+    </div>
+    
+    <!-- Timeline visualization -->
+    <div id="timeline-visualization" style="margin-top: 24px; height: 300px;">
+      <p class="text-muted">Timeline visualization would appear here.</p>
+      
+      <!-- Placeholder for timeline chart -->
+      <div style="background: var(--panel); border-radius: 8px; height: 250px; display: flex; align-items: center; justify-content: center;">
+        <div>
+          <span style="font-size: 16px;">📊</span>
+          <p class="text-body">Timeline chart would be displayed here</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Detailed entries list -->
+    <div id="timeline-entries" style="margin-top: 24px;">
+      <h3 class="text-heading">Detailed Activity</h3>
+      <div id="timeline-entries-list">
+        <p class="text-muted">Loading activity entries...</p>
+      </div>
+    </div>
+    
+    <!-- Load more button -->
+    <div style="margin-top: 16px; text-align: center;">
+      <button class="btn" onclick="loadMoreTimeline()">Load More</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Set default date range to last week
+function setDefaultDateRange() {
+  const endDate = new Date();
+  const startDate = new Date(endDate);
+  startDate.setDate(startDate.getDate() - 7);
+  
+  document.getElementById('date-range-start').valueAsDate = startDate;
+  document.getElementById('date-range-end').valueAsDate = endDate;
+}
+
+// Apply date range filter
+async function applyDateRange() {
+  try {
+    const startInput = document.getElementById('date-range-start');
+    const endInput = document.getElementById('date-range-end');
+    
+    if (!startInput.value || !endInput.value) {
+      return;
+    }
+    
+    const startTime = new Date(startInput.value + 'T00:00:00').getTime();
+    const endTime = new Date(endInput.value + 'T23:59:59.999').getTime(); // Add a day to include end date
+    
+    console.log('Filtering entries from:', new Date(startTime), 'to:', new Date(endTime));
+    
+    const response = await window.trailmark.getEntriesByRange(startTime, endTime);
+    
+    if (response.success) {
+      populateTimelineEntries(response.data);
+    } else {
+      console.error('Error getting timeline data:', response.error);
+    }
+  } catch (error) {
+    console.error('Error applying date range:', error);
+  }
+}
+
+// Reset to default date range
+function resetDateRange() {
+  setDefaultDateRange();
+  applyDateRange();
+}
+
+// Populate entries in timeline view
+async function populateTimelineEntries(entries) {
+  const container = document.getElementById('timeline-entries-list');
+  
+  if (!entries || entries.length === 0) {
+    container.innerHTML = '<p class="text-muted">No activity found for this time period.</p>';
+    return;
+  }
+  
+  let html = '<ul style="margin: 8px 0; padding-left: 20px;">';
+  
+  // Sort by timestamp descending
+  entries.sort((a, b) => b.timestamp - a.timestamp);
+  
+  entries.forEach(entry => {
+    const appTitle = escapeHtml(entry.window?.title || 'Unknown App');
+    const duration = formatDuration(entry.duration);
+    const timestamp = new Date(entry.timestamp).toLocaleString();
+    
+    html += `<li class="text-body" style="padding: 8px; border-bottom: 1px solid var(--line);">
+      <strong>${appTitle}</strong> 
+      <span class="text-muted">(${duration})</span>
+      <br><small>${timestamp}</small>
+    </li>`;
+  });
+  
+  html += '</ul>';
+  container.innerHTML = html;
+}
+
+// Load more timeline data
+function loadMoreTimeline() {
+  alert('Loading more timeline entries...');
+}
+
+// Format duration for display
+function formatDuration(seconds) {
+  seconds = Math.max(0, Math.floor(seconds || 0));
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  let result = '';
+  if (hours > 0) result += `${hours}h `;
+  if (minutes > 0) result += `${minutes}m `;
+  if (secs > 0 || !result) result += `${secs}s`;
+  
+  return result.trim();
+}
+
+// Initialize when page loads
+setDefaultDateRange();
+applyDateRange();
+
+function showOverview() {
+  // This will be implemented in future phases
+  alert('Would navigate to overview view');
+}
+</script>

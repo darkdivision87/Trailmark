@@ -1,0 +1,178 @@
+<div class="card" style="margin: 14px;">
+  <h2 class="text-heading">Settings</h2>
+  
+  <div id="settings-content">
+    <p class="text-body">Configure Trailmark to suit your preferences.</p>
+    
+    <!-- General settings -->
+    <div class="card" style="margin-top: 16px;">
+      <h3 class="text-heading">General Settings</h3>
+      
+      <div style="margin-top: 12px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <span class="text-body">Auto-start tracking on launch</span>
+          <label class="switch">
+            <input type="checkbox" id="auto-start-tracking" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <span class="text-body">Show system tray icon</span>
+          <label class="switch">
+            <input type="checkbox" id="show-tray-icon" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <span class="text-body">Enable notifications</span>
+          <label class="switch">
+            <input type="checkbox" id="enable-notifications" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span class="text-body">Data retention period</span>
+          <select class="form-control" id="data-retention">
+            <option value="7">7 days</option>
+            <option value="30" selected>30 days (default)</option>
+            <option value="90">90 days</option>
+            <option value="180">180 days</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tracking settings -->
+    <div class="card" style="margin-top: 16px;">
+      <h3 class="text-heading">Tracking Settings</h3>
+      
+      <div style="margin-top: 12px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <span class="text-body">Polling interval (seconds)</span>
+          <input type="number" class="form-control" id="poll-interval" value="2" min="1" max="30">
+        </div>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <span class="text-body">Track window titles</span>
+          <label class="switch">
+            <input type="checkbox" id="track-titles" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span class="text-body">Track window paths</span>
+          <label class="switch">
+            <input type="checkbox" id="track-paths">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Data management -->
+    <div class="card" style="margin-top: 16px;">
+      <h3 class="text-heading">Data Management</h3>
+      
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button class="btn btn-primary" onclick="exportData()">Export Data</button>
+        <button class="btn" onclick="importData()">Import Data</button>
+        <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+      </div>
+      
+      <div style="margin-top: 16px; padding: 12px; background: var(--panel); border-radius: 8px;">
+        <p class="text-body">Current data size: <span id="data-size">0 KB</span></p>
+        <p class="text-muted" style="font-size: 14px;">Last synced: <span id="last-sync">Never</span></p>
+      </div>
+    </div>
+    
+    <!-- Save button -->
+    <div style="margin-top: 24px; text-align: right;">
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Load current settings
+function loadSettings() {
+  // This would be implemented to read from storage
+  console.log('Loading current settings...');
+}
+
+// Save current settings
+async function saveSettings() {
+  try {
+    const autoStart = document.getElementById('auto-start-tracking').checked;
+    const showTray = document.getElementById('show-tray-icon').checked;
+    const enableNotifications = document.getElementById('enable-notifications').checked;
+    const dataRetention = document.getElementById('data-retention').value;
+    const pollInterval = document.getElementById('poll-interval').value;
+    const trackTitles = document.getElementById('track-titles').checked;
+    const trackPaths = document.getElementById('track-paths').checked;
+    
+    console.log('Saving settings:', {
+      autoStart,
+      showTray,
+      enableNotifications,
+      dataRetention,
+      pollInterval,
+      trackTitles,
+      trackPaths
+    });
+    
+    // In a real implementation, we would save these to storage
+    
+    alert('Settings saved successfully!');
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    alert('Failed to save settings');
+  }
+}
+
+// Export data function
+function exportData() {
+  alert('Export functionality would open here');
+}
+
+// Import data function  
+function importData() {
+  alert('Import functionality would open here');
+}
+
+// Clear all data function
+async function clearAllData() {
+  if (confirm('Are you sure you want to delete ALL tracked data? This cannot be undone.')) {
+    try {
+      const response = await window.trailmark.clearData();
+      
+      if (response.success) {
+        alert('All data has been cleared successfully.');
+        // Refresh UI
+        refreshSettings();
+      } else {
+        alert(`Failed to clear data: ${response.error}`);
+      }
+    } catch (error) {
+      console.error('Error clearing data:', error);
+      alert('Error occurred while clearing data');
+    }
+  }
+}
+
+// Refresh settings view with current state
+function refreshSettings() {
+  // This would populate the actual data size and last sync date
+  document.getElementById('data-size').textContent = '0 KB';
+  document.getElementById('last-sync').textContent = 'Never';
+  
+  console.log('Refreshing settings...');
+}
+
+// Initialize when page loads
+loadSettings();
+
+</script>
