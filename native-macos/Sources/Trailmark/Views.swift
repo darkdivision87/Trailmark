@@ -53,7 +53,7 @@ struct WidgetView: View {
             VStack(spacing: 10) {
                 ForEach(Array(model.zones.split(separator: ",").prefix(4).enumerated()), id: \.offset) { _, identifier in
                     if let zone = TimeZone(identifier: String(identifier).trimmingCharacters(in: .whitespaces)) {
-                        row(zone.identifier.split(separator: "/").last.map(String.init)?.replacingOccurrences(of: "_", with: " ") ?? zone.identifier, model.now.formatted(.dateTime.hour().minute().timeZone(zone)))
+                        row(zone.identifier.split(separator: "/").last.map(String.init)?.replacingOccurrences(of: "_", with: " ") ?? zone.identifier, model.now.formatted(Date.FormatStyle(date: .omitted, time: .shortened, timeZone: zone)))
                     }
                 }
             }
